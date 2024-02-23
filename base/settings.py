@@ -1,11 +1,16 @@
 from pathlib import Path
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-SECRET_KEY = "django-insecure-)99_46v_uz9hb2650v6se=sq0=tgbezn+#wb&lobd_a)xk0s#@"
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG")
 
 ALLOWED_HOSTS = []
 
@@ -20,6 +25,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "src.users",
+    "src.vacancies",
+    "src.companies",
 ]
 
 MIDDLEWARE = [
@@ -56,11 +63,11 @@ WSGI_APPLICATION = "base.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "work_vacancy_db",
-        "USERNAME": "serega",
-        "PASSWORD": "korosten11",
-        "HOST": "localhost",
-        "PORT": 5433,
+        "NAME": os.getenv("DB_NAME"),
+        "USERNAME": os.getenv("DB_USERNAME"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
     }
 }
 
@@ -81,7 +88,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-AUTH_USER_MODEL = "src.users.User"
+AUTH_USER_MODEL = "users.User"
 
 
 LANGUAGE_CODE = "en-us"
@@ -94,6 +101,10 @@ USE_TZ = True
 
 
 STATIC_URL = "static/"
+
+
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

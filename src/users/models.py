@@ -5,10 +5,11 @@ from .validators import validate_phone_number
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(primary_key=True)
+    email = models.EmailField(unique=True)
     phone_number = models.CharField(null=True, validators=[validate_phone_number])
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
+    birthday = models.DateField(null=True)
 
     is_active = models.BooleanField()
     is_staff = models.BooleanField()
