@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import MaxLengthValidator
 from src.users.models import User
 from src.users.validators import validate_phone_number
+from .utils import STAFF_QUANTITY
 
 
 class ScoreOfActivity(models.Model):
@@ -13,14 +14,6 @@ class Country(models.Model):
 
 
 class Company(models.Model):
-
-    STAFF_QUANTITY = (
-        ("1-10", "1-10"),
-        ("11-50", "11-50"),
-        ("51-100", "51-100"),
-        ("101-1000", "101-1000"),
-        ("1000+", "1000+"),
-    )
 
     name = models.CharField(unique=True)
     description = models.TextField(validators=[MaxLengthValidator(5000)])

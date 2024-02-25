@@ -6,16 +6,12 @@ from rest_framework import status
 from rest_framework import permissions
 from .models import User
 from .serializers import RegisterSerializer
-from django.core.mail import send_mail
-from django.conf import settings
-from django.urls import reverse
-from itsdangerous import URLSafeSerializer
-from datetime import datetime, timedelta
+from .logic import VerificationService
 
 
 class UserViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
-    # serializer_class = RegisterSerializer
+    verification = VerificationService()
 
     @action(
         methods=["post"],
@@ -28,31 +24,17 @@ class UserViewSet(viewsets.GenericViewSet):
         data = RegisterSerializer(data=request.data)
         data.is_valid(raise_exception=True)
         result = data.save()
-        self._send_verification_email(result.email)
+        self.verification.send_verification_email(result.email)
         return Response({"create": f"User id {result.id}"}, status.HTTP_201_CREATED)
 
     @action(
         methods=["get"],
         detail=False,
-        # url_path="verify/<str:token>",
-        # url_name="verify",
         permission_classes=[permissions.AllowAny],
     )
-    def verify_email(self, request, token, *args, **kwargs):
-        return Response({"hello": "man"})
+    def verify_email(self, request, *args, **kwargs):
+        activation_process = self.verification.activate_user(kwargs.get("token"))
 
-    @classmethod
-    def _send_verification_email(cls, email):
-        gen_token = URLSafeSerializer(settings.SECRET_KEY, "activate")
-        exp_time = str(datetime.now() + timedelta(days=1))
-        token = gen_token.dumps({"email": email, "exp": exp_time})
-        link = f"http://127.0.0.1:8000/users/verify/{token}"
-        subject = "Hello from out site!"
-        message = f"If you're register in our site please click link for verification your email address {link}"
-        send_mail(
-            subject,
-            message,
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[email],
-            fail_silently=True,
-        )
+        if activation_process is False:
+            return Response({"error": "token was expired or incorrect"}, status=400)
+        return Response({"message": "user was activated"}, status=200)
