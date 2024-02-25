@@ -36,3 +36,15 @@ class Company(models.Model):
     )
     country = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+class VerifyRequest(models.Model):
+    STATUS_CHOICE = (
+        ("send", "send"),
+        ("accept", "accept"),
+        ("cancel", "cancel"),
+    )
+    company = models.OneToOneField(Company, on_delete=models.CASCADE)
+    request_text = models.TextField(max_length=500)
+    status = models.CharField(choices=STATUS_CHOICE, max_length=10, default="send")
+    created_at = models.DateTimeField(auto_now_add=True)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Company, Country, ScoreOfActivity
+from .models import Company, Country, ScoreOfActivity, VerifyRequest
 from .utils import STAFF_QUANTITY
 
 
@@ -23,6 +23,12 @@ class CreateCompanySerializer(serializers.ModelSerializer):
         exclude = ["owner"]
 
 
+class ShortCompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = ["id", "name"]
+
+
 class RetrieveCompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
@@ -34,3 +40,15 @@ class RetrieveCompanySerializer(serializers.ModelSerializer):
             "work_phone_number",
             "country",
         ]
+
+
+class RequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VerifyRequest
+        fields = "__all__"
+
+
+class ApproveRequestSerializer(serializers.Serializer):
+    RESULT_CHOICE = (("accept", "accept"), ("cancel", "cancel"))
+    request_id = serializers.IntegerField()
+    result = serializers.ChoiceField(RESULT_CHOICE)

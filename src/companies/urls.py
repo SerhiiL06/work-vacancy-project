@@ -11,4 +11,16 @@ urlpatterns = [
             {"get": "retrieve"}, permission_classes=[AllowAny]
         ),
     ),
+    path(
+        "request/",
+        views.RequestCompanyViewSet.as_view({"get": "list", "post": "create"}),
+    ),
+    path(
+        "request/verify",
+        views.VerifyCompanyViewSet.as_view({"get": "list"}),
+    ),
+    path(
+        "request/verify/<int:pk>/",
+        views.VerifyCompanyViewSet.as_view({"patch": "partial_update"}),
+    ),
 ]
