@@ -14,6 +14,7 @@ from .serializers import (
     RequestSerializer,
     ApproveRequestSerializer,
 )
+from django.db import transaction
 
 
 class CompanyViewSet(ModelViewSet):
@@ -77,6 +78,7 @@ class VerifyCompanyViewSet(ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
     serializer_class = RequestSerializer
 
+    @transaction.atomic
     def partial_update(self, request, *args, **kwargs):
         data = ApproveRequestSerializer(data=request.data)
 
