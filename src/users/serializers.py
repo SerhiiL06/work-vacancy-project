@@ -21,3 +21,16 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["email", "first_name", "last_name", "password1", "password2"]
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["email", "first_name", "last_name", "birthday"]
+
+
+class UpdateProfileSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False)
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    birthday = serializers.DateField(required=False)
