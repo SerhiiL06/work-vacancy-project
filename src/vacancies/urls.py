@@ -4,6 +4,7 @@ from rest_framework.routers import SimpleRouter
 
 
 router = SimpleRouter()
-router.register("", views.VacancyViewSet)
+router.register("vacansies/", views.VacancyViewSet)
+router.register("resumes", views.ResumeViewSet)
 
 urlpatterns = router.urls

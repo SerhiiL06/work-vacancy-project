@@ -23,6 +23,9 @@ class Resume(models.Model):
     title = models.CharField(max_length=50)
     description = models.TextField(max_length=500)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    calary = models.CharField(
+        validators=[calary_validator], null=True, blank=True, default="0"
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     activity_scope = models.ForeignKey(

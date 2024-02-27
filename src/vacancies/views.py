@@ -1,10 +1,14 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
-from .models import Vacancy, Company, ScoreOfActivity
+from rest_framework.exceptions import ValidationError
+from rest_framework import permissions
+from .models import Vacancy, Company, ScoreOfActivity, Resume
 from .serializers import (
     CreateVacancySerializer,
     VacancyListSerializer,
     VacancyUpdateSerializer,
+    CreateResumeSerializer,
+    ListResumeSerializer,
 )
 from django.core.exceptions import PermissionDenied
 from .permissions import VacancyPermissions, VacancyObjPermission
@@ -51,3 +55,20 @@ class VacancyViewSet(viewsets.ModelViewSet):
         if self.action == "partial_update":
             return VacancyUpdateSerializer
         return super().get_serializer_class()
+
+
+class ResumeViewSet(viewsets.ModelViewSet):
+    queryset = Resume.objects.filter(is_active=True)
+    serializer_class = CreateResumeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        if self.request.user.is_staff:
+            raise ValidationError({"error": "admin cannot create resume"})
+        serializer.save(owner=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return super().get_serializer_class()
+        if self.action == "list":
+            return ListResumeSerializer

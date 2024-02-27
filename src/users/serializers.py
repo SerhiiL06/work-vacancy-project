@@ -2,6 +2,8 @@ from rest_framework import serializers
 from rest_framework.validators import ValidationError
 from rest_framework import status
 from .models import User
+from datetime import datetime
+from django.utils.timesince import timesince
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -27,6 +29,25 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["email", "first_name", "last_name", "birthday"]
+
+
+class FullProfileSerializer(ProfileSerializer):
+    class Meta(ProfileSerializer.Meta):
+        fields = ProfileSerializer.Meta.fields + ["is_active"]
+
+
+class UserInlineSerializer(serializers.ModelSerializer):
+    birthday = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "birthday"]
+
+    def get_birthday(self, obj):
+        if not obj.birthday:
+            return None
+
+        return timesince(obj.birthday)
 
 
 class UpdateProfileSerializer(serializers.Serializer):

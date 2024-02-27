@@ -6,13 +6,29 @@ from rest_framework import status
 from rest_framework import permissions
 from django.core.exceptions import PermissionDenied
 from .models import User
-from .serializers import RegisterSerializer, ProfileSerializer, UpdateProfileSerializer
+from .serializers import (
+    RegisterSerializer,
+    ProfileSerializer,
+    UpdateProfileSerializer,
+    FullProfileSerializer,
+)
 from .logic import VerificationService
 
 
 class UserViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
     verification = VerificationService()
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="admin/users",
+    )
+    def users(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+            raise PermissionDenied()
+        serializer = FullProfileSerializer(instance=self.get_queryset(), many=True)
+        return Response({"message": serializer.data}, 200)
 
     @action(
         methods=["post"],
