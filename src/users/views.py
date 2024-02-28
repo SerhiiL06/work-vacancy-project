@@ -14,21 +14,12 @@ from .serializers import (
 )
 from .logic import VerificationService
 
+from django.core.cache import cache
 
-class UserViewSet(viewsets.GenericViewSet):
+
+class AuthViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
     verification = VerificationService()
-
-    @action(
-        methods=["get"],
-        detail=False,
-        url_path="admin/users",
-    )
-    def users(self, request, *args, **kwargs):
-        if not request.user.is_staff:
-            raise PermissionDenied()
-        serializer = FullProfileSerializer(instance=self.get_queryset(), many=True)
-        return Response({"message": serializer.data}, 200)
 
     @action(
         methods=["post"],
@@ -51,7 +42,6 @@ class UserViewSet(viewsets.GenericViewSet):
     )
     def verify_email(self, request, *args, **kwargs):
         activation_process = self.verification.activate_user(kwargs.get("token"))
-
         if activation_process is False:
             return Response({"error": "token was expired or incorrect"}, status=400)
         return Response({"message": "user was activated"}, status=200)
@@ -61,6 +51,24 @@ class ProfileViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="admin/users",
+    )
+    def users(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+
+            raise PermissionDenied()
+
+        if not cache.get("user_list"):
+            serializer = FullProfileSerializer(instance=self.get_queryset(), many=True)
+            cache.set("user_list", serializer.data, 60)
+        return Response(
+            {"message": cache.get("user_list"), "red": cache.get(request.user.email)},
+            200,
+        )
 
     @action(methods=["get"], detail=False)
     def profile(self, request, *args, **kwargs):

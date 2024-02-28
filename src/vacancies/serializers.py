@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Vacancy, Resume
+from .models import Vacancy, Resume, Respond
 
 from src.companies.serializers import (
     ScoreOfActivitiesSerializer,
@@ -52,3 +52,16 @@ class CreateResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
         fields = "__all__"
+
+
+class CreateRespondSerializer(serializers.Serializer):
+    resume_id = serializers.IntegerField()
+
+
+class RespondSerializer(serializers.ModelSerializer):
+    resume_id = ListResumeSerializer(many=False)
+    vacancy_id = VacancyListSerializer(many=False)
+
+    class Meta:
+        model = Respond
+        fields = ["resume_id", "vacancy_id"]

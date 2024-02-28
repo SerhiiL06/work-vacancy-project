@@ -4,12 +4,12 @@ from django.urls import path
 
 router = SimpleRouter()
 
-router.register("", views.UserViewSet)
+router.register("", views.AuthViewSet)
 
 
 urlpatterns = [
-    path("verify/<str:token>", views.UserViewSet.as_view({"get": "verify_email"})),
-    path("admin/all", views.UserViewSet.as_view({"get": "users"})),
+    path("verify/<str:token>", views.AuthViewSet.as_view({"get": "verify_email"})),
+    path("admin/all", views.ProfileViewSet.as_view({"get": "users"})),
     path(
         "profile/",
         views.ProfileViewSet.as_view({"get": "profile", "patch": "update_profile"}),

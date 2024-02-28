@@ -2,14 +2,17 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework import permissions
-from .models import Vacancy, Company, ScoreOfActivity, Resume
+from .models import Vacancy, Company, ScoreOfActivity, Resume, Respond
 from .serializers import (
     CreateVacancySerializer,
     VacancyListSerializer,
     VacancyUpdateSerializer,
     CreateResumeSerializer,
     ListResumeSerializer,
+    CreateRespondSerializer,
+    RespondSerializer,
 )
+from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 from .permissions import VacancyPermissions, VacancyObjPermission
 from rest_framework.decorators import action
@@ -60,7 +63,19 @@ class VacancyViewSet(viewsets.ModelViewSet):
 class ResumeViewSet(viewsets.ModelViewSet):
     queryset = Resume.objects.filter(is_active=True)
     serializer_class = CreateResumeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="my",
+        permission_classes=[permissions.IsAuthenticated()],
+    )
+    def my_resumes(self, request, *args, **kwargs):
+        query = Resume.objects.filter(owner=request.user)
+
+        serializer = ListResumeSerializer(query, many=True)
+        return Response({"resumes": serializer.data}, 200)
 
     def perform_create(self, serializer):
         if self.request.user.is_staff:
@@ -72,3 +87,43 @@ class ResumeViewSet(viewsets.ModelViewSet):
             return super().get_serializer_class()
         if self.action == "list":
             return ListResumeSerializer
+
+    def get_permissions(self):
+        if self.action in ["list", "retrieve"]:
+            return super().get_permissions()
+        return [permissions.IsAuthenticated()]
+
+
+class RespondViewSet(viewsets.ModelViewSet):
+    queryset = Respond.objects.all()
+    serializer_class = RespondSerializer
+    http_method_names = ["get", "post"]
+
+    def create(self, request, *args, **kwargs):
+        data = CreateRespondSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        respond_check = Respond.objects.filter(
+            resume_id=data.validated_data.get("resume_id"),
+            vacancy_id=kwargs.get("pk"),
+            viewed=False,
+        )
+
+        if respond_check.first():
+            return Response({"error": "u can send maximum one respond"})
+
+        current_vacancy = get_object_or_404(Vacancy, id=kwargs.get("pk"))
+        current_resume = get_object_or_404(
+            Resume, id=data.validated_data.get("resume_id")
+        )
+        if current_resume.owner != request.user:
+            raise PermissionDenied()
+        Respond.objects.create(
+            resume_id=current_resume,
+            vacancy_id=current_vacancy,
+        )
+        return Response({"message": "respond was sent"}, 204)
+
+    def get_queryset(self):
+        if self.action == "list":
+            return Respond.objects.filter(resume_id__owner=self.request.user)
+        return super().get_queryset()

@@ -43,7 +43,7 @@ MIDDLEWARE = [
 
 
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
@@ -132,3 +132,11 @@ EMAIL_HOST_USER = "sergiy06061997@gmail.com"
 EMAIL_HOST_PASSWORD = "weir gzwf sbsq xvqb"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+    }
+}

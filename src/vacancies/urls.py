@@ -4,7 +4,18 @@ from rest_framework.routers import SimpleRouter
 
 
 router = SimpleRouter()
-router.register("vacansies/", views.VacancyViewSet)
-router.register("resumes", views.ResumeViewSet)
+router.register("jobseeker/vacansies", views.VacancyViewSet)
+router.register("employeer/resumes", views.ResumeViewSet)
 
-urlpatterns = router.urls
+
+urlpatterns = [
+    path(
+        "jobseeker/vacansies/<int:pk>/respond",
+        views.RespondViewSet.as_view({"post": "create"}),
+    ),
+    path(
+        "jobseeker/vacansies/respondes/", views.RespondViewSet.as_view({"get": "list"})
+    ),
+]
+
+urlpatterns += router.urls
