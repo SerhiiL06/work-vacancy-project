@@ -1,7 +1,9 @@
-from django.db import models
 from django.core.validators import MaxLengthValidator
+from django.db import models
+
 from src.users.models import User
 from src.users.validators import validate_phone_number
+
 from .utils import STAFF_QUANTITY
 
 

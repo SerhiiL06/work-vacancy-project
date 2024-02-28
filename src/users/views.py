@@ -1,20 +1,13 @@
-from rest_framework import viewsets
-from rest_framework.decorators import action
-from .serializers import RegisterSerializer
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework import permissions
-from django.core.exceptions import PermissionDenied
-from .models import User
-from .serializers import (
-    RegisterSerializer,
-    ProfileSerializer,
-    UpdateProfileSerializer,
-    FullProfileSerializer,
-)
-from .logic import VerificationService
-
 from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from .logic import VerificationService
+from .models import User
+from .serializers import (FullProfileSerializer, ProfileSerializer,
+                          RegisterSerializer, UpdateProfileSerializer)
 
 
 class AuthViewSet(viewsets.GenericViewSet):

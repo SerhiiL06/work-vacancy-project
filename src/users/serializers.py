@@ -1,9 +1,10 @@
-from rest_framework import serializers
-from rest_framework.validators import ValidationError
-from rest_framework import status
-from .models import User
 from datetime import datetime
+
 from django.utils.timesince import timesince
+from rest_framework import serializers, status
+from rest_framework.validators import ValidationError
+
+from .models import User
 
 
 class RegisterSerializer(serializers.ModelSerializer):

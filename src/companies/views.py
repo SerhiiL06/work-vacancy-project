@@ -1,20 +1,16 @@
+from django.core.exceptions import BadRequest, PermissionDenied
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+from rest_framework import permissions, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework import permissions
-from rest_framework.decorators import action
-from django.shortcuts import get_object_or_404
-from rest_framework import status
+
 from .models import Company, Country, ScoreOfActivity, VerifyRequest
-from .serializers import (
-    CreateCompanySerializer,
-    ListOfCountriesSerializer,
-    ScoreOfActivitiesSerializer,
-    RetrieveCompanySerializer,
-    ShortCompanySerializer,
-    RequestSerializer,
-    ApproveRequestSerializer,
-)
-from django.db import transaction
+from .serializers import (ApproveRequestSerializer, CreateCompanySerializer,
+                          ListOfCountriesSerializer, RequestSerializer,
+                          RetrieveCompanySerializer,
+                          ScoreOfActivitiesSerializer, ShortCompanySerializer)
 
 
 class CompanyViewSet(ModelViewSet):
@@ -22,7 +18,9 @@ class CompanyViewSet(ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = CreateCompanySerializer
 
-    def list(self, request):
+    @action(methods=["get"], detail=False)
+    def property_list(self, request):
+        """list of countries and activities for creating company"""
         countries = Country.objects.all()
         activities = ScoreOfActivity.objects.all()
         list_country = ListOfCountriesSerializer(countries, many=True)
@@ -37,6 +35,13 @@ class CompanyViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+    def get_permissions(self):
+        if self.action in ["list", "destroy"]:
+            return [permissions.IsAdminUser()]
+        if self.action == "retrieve":
+            return [permissions.AllowAny()]
+        return super().get_permissions()
+
     def get_serializer_class(self):
         if self.action == "list":
             return super().get_serializer_class()
@@ -50,21 +55,18 @@ class RequestCompanyViewSet(ModelViewSet):
 
     def list(self, request):
         query = Company.objects.filter(owner=request.user)
-
         serializer = ShortCompanySerializer(query, many=True)
-
         return Response({"list": serializer.data})
 
     def create(self, request, *args, **kwargs):
         data = RequestSerializer(data=request.data)
         data.is_valid(raise_exception=True)
         company = data.validated_data.get("company")
+        if company.verify:
+            raise BadRequest()
         if company.owner != request.user:
-            return Response(
-                {"message": "u don't permission for this"}, status.HTTP_400_BAD_REQUEST
-            )
+            raise PermissionDenied()
         check_request = VerifyRequest.objects.filter(company=company.id)
-
         if check_request.first():
             return Response({"error": "u cannot send more than one request"})
 
@@ -74,12 +76,13 @@ class RequestCompanyViewSet(ModelViewSet):
 
 class VerifyCompanyViewSet(ModelViewSet):
     queryset = VerifyRequest.objects.filter(status="send")
-    http_method_names = ["get", "post", "patch"]
+    http_method_names = ["get", "patch"]
     permission_classes = [permissions.IsAdminUser]
     serializer_class = RequestSerializer
 
     @transaction.atomic
     def partial_update(self, request, *args, **kwargs):
+        """admin user can verify and accept or cancel verify request"""
         data = ApproveRequestSerializer(data=request.data)
 
         data.is_valid(raise_exception=True)

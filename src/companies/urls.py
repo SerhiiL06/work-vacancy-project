@@ -1,15 +1,18 @@
-from . import views
-from rest_framework.permissions import AllowAny
 from django.urls import path
+from rest_framework.permissions import AllowAny
 
+from . import views
 
 urlpatterns = [
-    path("register/", views.CompanyViewSet.as_view({"get": "list", "post": "create"})),
+    path("", views.CompanyViewSet.as_view({"get": "list"})),
+    path(
+        "register/",
+        views.CompanyViewSet.as_view({"post": "create"}),
+    ),
+    path("property-list/", views.CompanyViewSet.as_view({"get": "property_list"})),
     path(
         "<int:pk>/",
-        views.CompanyViewSet.as_view(
-            {"get": "retrieve"}, permission_classes=[AllowAny]
-        ),
+        views.CompanyViewSet.as_view({"get": "retrieve", "delete": "destroy"}),
     ),
     path(
         "request/",
@@ -21,6 +24,8 @@ urlpatterns = [
     ),
     path(
         "request/verify/<int:pk>/",
-        views.VerifyCompanyViewSet.as_view({"patch": "partial_update"}),
+        views.VerifyCompanyViewSet.as_view(
+            {"get": "retrieve", "patch": "partial_update"}
+        ),
     ),
 ]

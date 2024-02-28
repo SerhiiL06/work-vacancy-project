@@ -1,6 +1,8 @@
 from django.db import models
+
 from src.companies.models import Company, ScoreOfActivity
 from src.users.models import User
+
 from .validators import calary_validator
 
 

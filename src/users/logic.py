@@ -1,7 +1,9 @@
-from itsdangerous import URLSafeSerializer
 from datetime import datetime, timedelta
+
 from django.conf import settings
 from django.core.mail import send_mail
+from itsdangerous import URLSafeSerializer
+
 from .models import User
 
 

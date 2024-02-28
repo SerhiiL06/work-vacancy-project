@@ -1,21 +1,16 @@
-from rest_framework import viewsets
-from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-from rest_framework import permissions
-from .models import Vacancy, Company, ScoreOfActivity, Resume, Respond
-from .serializers import (
-    CreateVacancySerializer,
-    VacancyListSerializer,
-    VacancyUpdateSerializer,
-    CreateResumeSerializer,
-    ListResumeSerializer,
-    CreateRespondSerializer,
-    RespondSerializer,
-)
-from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
-from .permissions import VacancyPermissions, VacancyObjPermission
+from django.shortcuts import get_object_or_404
+from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+
+from .models import Company, Respond, Resume, ScoreOfActivity, Vacancy
+from .permissions import VacancyObjPermission, VacancyPermissions
+from .serializers import (CreateRespondSerializer, CreateResumeSerializer,
+                          CreateVacancySerializer, ListResumeSerializer,
+                          RespondSerializer, VacancyListSerializer,
+                          VacancyUpdateSerializer)
 
 
 class VacancyViewSet(viewsets.ModelViewSet):
@@ -37,7 +32,6 @@ class VacancyViewSet(viewsets.ModelViewSet):
         serializer.validated_data["activity_scope"] = ScoreOfActivity.objects.get(
             id=activity_scope_id
         )
-
         new = serializer.save()
         return Response({"ok": new.id}, 201)
 
@@ -125,5 +119,7 @@ class RespondViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.action == "list":
-            return Respond.objects.filter(resume_id__owner=self.request.user)
+            return Respond.objects.filter(
+                resume_id__owner=self.request.user
+            ).prefetch_related("resume_id")
         return super().get_queryset()

@@ -1,11 +1,10 @@
 from rest_framework import serializers
-from .models import Vacancy, Resume, Respond
 
-from src.companies.serializers import (
-    ScoreOfActivitiesSerializer,
-    ShortCompanySerializer,
-)
+from src.companies.serializers import (ScoreOfActivitiesSerializer,
+                                       ShortCompanySerializer)
 from src.users.serializers import UserInlineSerializer
+
+from .models import Respond, Resume, Vacancy
 
 
 class CreateVacancySerializer(serializers.ModelSerializer):
