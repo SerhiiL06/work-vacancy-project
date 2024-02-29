@@ -1,7 +1,9 @@
 from rest_framework import serializers
 
-from src.companies.serializers import (ScoreOfActivitiesSerializer,
-                                       ShortCompanySerializer)
+from src.companies.serializers import (
+    ScoreOfActivitiesSerializer,
+    ShortCompanySerializer,
+)
 from src.users.serializers import UserInlineSerializer
 
 from .models import Respond, Resume, Vacancy
@@ -34,12 +36,24 @@ class VacancyListSerializer(serializers.ModelSerializer):
         fields = ["title", "description", "created_at", "company", "activity_scope"]
 
 
+class VacancyShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vacancy
+        fields = ["title", "description", "calary"]
+
+
 class ListResumeSerializer(serializers.ModelSerializer):
     owner = UserInlineSerializer(many=False)
 
     class Meta:
         model = Resume
         fields = ["id", "title", "owner"]
+
+
+class InlineResumeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Resume
+        fields = ["id", "title"]
 
 
 class CreateResumeSerializer(serializers.ModelSerializer):
@@ -53,14 +67,23 @@ class CreateResumeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class RetrieveResumeSerializer(serializers.ModelSerializer):
+    owner = UserInlineSerializer(many=False)
+    format_work = serializers.CharField(required=False)
+
+    class Meta:
+        model = Resume
+        fields = ["id", "title", "description", "calary", "format_work", "owner"]
+
+
 class CreateRespondSerializer(serializers.Serializer):
     resume_id = serializers.IntegerField()
 
 
 class RespondSerializer(serializers.ModelSerializer):
-    resume_id = ListResumeSerializer(many=False)
-    vacancy_id = VacancyListSerializer(many=False)
+    vacancy_id = VacancyShortSerializer(many=False)
+    resume_id = InlineResumeSerializer(many=False)
 
     class Meta:
         model = Respond
-        fields = ["resume_id", "vacancy_id"]
+        fields = ["vacancy_id", "resume_id", "viewed"]

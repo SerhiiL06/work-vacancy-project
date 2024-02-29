@@ -6,8 +6,12 @@ from rest_framework.response import Response
 
 from .logic import VerificationService
 from .models import User
-from .serializers import (FullProfileSerializer, ProfileSerializer,
-                          RegisterSerializer, UpdateProfileSerializer)
+from .serializers import (
+    FullProfileSerializer,
+    ProfileSerializer,
+    RegisterSerializer,
+    UpdateProfileSerializer,
+)
 
 
 class AuthViewSet(viewsets.GenericViewSet):
@@ -48,7 +52,6 @@ class ProfileViewSet(viewsets.GenericViewSet):
     @action(
         methods=["get"],
         detail=False,
-        url_path="admin/users",
     )
     def users(self, request, *args, **kwargs):
         if not request.user.is_staff:
@@ -56,12 +59,11 @@ class ProfileViewSet(viewsets.GenericViewSet):
             raise PermissionDenied()
 
         if not cache.get("user_list"):
-            serializer = FullProfileSerializer(instance=self.get_queryset(), many=True)
+            serializer = FullProfileSerializer(
+                instance=self.get_queryset().order_by("-join_at"), many=True
+            )
             cache.set("user_list", serializer.data, 60)
-        return Response(
-            {"message": cache.get("user_list"), "red": cache.get(request.user.email)},
-            200,
-        )
+        return Response({"users": cache.get("user_list")}, 200)
 
     @action(methods=["get"], detail=False)
     def profile(self, request, *args, **kwargs):
@@ -78,12 +80,12 @@ class ProfileViewSet(viewsets.GenericViewSet):
 
         request.user.save()
 
-        return Response({"message": "update success"})
+        return Response({"update_success": data_to_update.data}, status.HTTP_200_OK)
 
-    @action(methods=["delete"], detail=True)
+    @action(methods=["delete"], detail=False)
     def delete_profile(self, request, *args, **kwargs):
+        user_to_delete = request.data.get("user_id")
         if not request.user.is_staff:
             raise PermissionDenied()
-        User.objects.get(id=kwargs.get("pk")).delete()
-
+        User.objects.get(id=user_to_delete).delete()
         return Response({"message": "user success delete"})

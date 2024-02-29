@@ -7,10 +7,17 @@ from rest_framework.response import Response
 
 from .models import Company, Respond, Resume, ScoreOfActivity, Vacancy
 from .permissions import VacancyObjPermission, VacancyPermissions
-from .serializers import (CreateRespondSerializer, CreateResumeSerializer,
-                          CreateVacancySerializer, ListResumeSerializer,
-                          RespondSerializer, VacancyListSerializer,
-                          VacancyUpdateSerializer)
+from .serializers import (
+    CreateRespondSerializer,
+    CreateResumeSerializer,
+    CreateVacancySerializer,
+    ListResumeSerializer,
+    RespondSerializer,
+    VacancyListSerializer,
+    VacancyUpdateSerializer,
+    VacancyShortSerializer,
+    RetrieveResumeSerializer,
+)
 
 
 class VacancyViewSet(viewsets.ModelViewSet):
@@ -35,8 +42,20 @@ class VacancyViewSet(viewsets.ModelViewSet):
         new = serializer.save()
         return Response({"ok": new.id}, 201)
 
-    @action(methods=["get"], detail=False)
-    def my(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
+        obj = Vacancy.objects.get(id=kwargs.get("pk"))
+        serialzier = VacancyListSerializer(obj, many=False)
+        check = Respond.objects.filter(vacancy_id=obj.id, resume_id__owner=request.user)
+        last_sended = check.first().created_at.date() if check.first() else None
+        return Response({"vacancy": serialzier.data, "last_sended": last_sended}, 200)
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="my",
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def user_vacancies(self, request, *args, **kwargs):
         query = Company.objects.raw(
             "SELECT id FROM companies_company WHERE companies_company.owner_id = %s",
             [request.user.id],
@@ -47,7 +66,9 @@ class VacancyViewSet(viewsets.ModelViewSet):
         return Response({"user vacancies": serializer.data})
 
     def get_serializer_class(self):
-        if self.action in ["list", "retrieve"]:
+        if self.action in "list":
+            return VacancyShortSerializer
+        if self.action == "retrieve":
             return VacancyListSerializer
         if self.action == "partial_update":
             return VacancyUpdateSerializer
@@ -77,10 +98,12 @@ class ResumeViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
     def get_serializer_class(self):
-        if self.action == "create":
-            return super().get_serializer_class()
         if self.action == "list":
             return ListResumeSerializer
+        if self.action == "create":
+            return super().get_serializer_class()
+        if self.action == "retrieve":
+            return RetrieveResumeSerializer
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
@@ -91,6 +114,7 @@ class ResumeViewSet(viewsets.ModelViewSet):
 class RespondViewSet(viewsets.ModelViewSet):
     queryset = Respond.objects.all()
     serializer_class = RespondSerializer
+    permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get", "post"]
 
     def create(self, request, *args, **kwargs):

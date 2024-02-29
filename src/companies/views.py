@@ -7,16 +7,23 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Company, Country, ScoreOfActivity, VerifyRequest
-from .serializers import (ApproveRequestSerializer, CreateCompanySerializer,
-                          ListOfCountriesSerializer, RequestSerializer,
-                          RetrieveCompanySerializer,
-                          ScoreOfActivitiesSerializer, ShortCompanySerializer)
+from .serializers import (
+    ApproveRequestSerializer,
+    CreateCompanySerializer,
+    ListOfCountriesSerializer,
+    RequestSerializer,
+    RetrieveCompanySerializer,
+    ScoreOfActivitiesSerializer,
+    ShortCompanySerializer,
+)
 
 
 class CompanyViewSet(ModelViewSet):
     queryset = Company.objects.all()
+    http_method_names = ["get", "post", "delete"]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = CreateCompanySerializer
+    lookup_field = "pk"
 
     @action(methods=["get"], detail=False)
     def property_list(self, request):
@@ -35,8 +42,13 @@ class CompanyViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return super().get_queryset()
+        return Company.objects.filter(owner=self.request.user)
+
     def get_permissions(self):
-        if self.action in ["list", "destroy"]:
+        if self.action in ["destroy"]:
             return [permissions.IsAdminUser()]
         if self.action == "retrieve":
             return [permissions.AllowAny()]
@@ -44,6 +56,8 @@ class CompanyViewSet(ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == "list":
+            return ShortCompanySerializer
+        if self.action == "create":
             return super().get_serializer_class()
         if self.action == "retrieve":
             return RetrieveCompanySerializer

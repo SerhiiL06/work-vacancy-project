@@ -34,7 +34,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class FullProfileSerializer(ProfileSerializer):
     class Meta(ProfileSerializer.Meta):
-        fields = ProfileSerializer.Meta.fields + ["is_active"]
+        fields = ProfileSerializer.Meta.fields + ["is_active", "join_at", "last_login"]
 
 
 class UserInlineSerializer(serializers.ModelSerializer):

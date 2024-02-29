@@ -17,17 +17,39 @@ class ScoreOfActivitiesSerializer(serializers.ModelSerializer):
 
 
 class CreateCompanySerializer(serializers.ModelSerializer):
+    phone = serializers.CharField(source="work_phone_number", required=False)
+    email = serializers.CharField(source="work_email")
+    site = serializers.CharField(source="site_address")
     staff = serializers.ChoiceField(STAFF_QUANTITY)
 
     class Meta:
         model = Company
-        exclude = ["owner"]
+        fields = [
+            "name",
+            "description",
+            "staff",
+            "phone",
+            "email",
+            "site",
+            "activity_scope",
+            "country",
+        ]
+
+    def to_representation(self, instance):
+        response = {
+            "company": {
+                "name": instance.name,
+                "description": instance.description,
+                "owner": instance.owner.id,
+            }
+        }
+        return response
 
 
 class ShortCompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
-        fields = ["id", "name"]
+        fields = ["id", "name", "verify"]
 
 
 class RetrieveCompanySerializer(serializers.ModelSerializer):
