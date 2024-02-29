@@ -1,9 +1,7 @@
 from rest_framework import serializers
 
-from src.companies.serializers import (
-    ScoreOfActivitiesSerializer,
-    ShortCompanySerializer,
-)
+from src.companies.serializers import (ScoreOfActivitiesSerializer,
+                                       ShortCompanySerializer)
 from src.users.serializers import UserInlineSerializer
 
 from .models import Respond, Resume, Vacancy
@@ -39,7 +37,7 @@ class VacancyListSerializer(serializers.ModelSerializer):
 class VacancyShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vacancy
-        fields = ["title", "description", "calary"]
+        fields = ["id", "title", "description", "calary"]
 
 
 class ListResumeSerializer(serializers.ModelSerializer):

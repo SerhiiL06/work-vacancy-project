@@ -20,6 +20,9 @@ class Vacancy(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     activity_scope = models.ForeignKey(ScoreOfActivity, on_delete=models.CASCADE)
 
+    class Meta:
+        ordering = ["-created_at"]
+
 
 class Resume(models.Model):
     title = models.CharField(max_length=50)

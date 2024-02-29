@@ -6,12 +6,8 @@ from rest_framework.response import Response
 
 from .logic import VerificationService
 from .models import User
-from .serializers import (
-    FullProfileSerializer,
-    ProfileSerializer,
-    RegisterSerializer,
-    UpdateProfileSerializer,
-)
+from .serializers import (FullProfileSerializer, ProfileSerializer,
+                          RegisterSerializer, UpdateProfileSerializer)
 
 
 class AuthViewSet(viewsets.GenericViewSet):

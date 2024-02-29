@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from src.vacancies.models import Vacancy
+
 from .models import Company, Country, ScoreOfActivity, VerifyRequest
 from .utils import STAFF_QUANTITY
 
@@ -51,8 +53,16 @@ class ShortCompanySerializer(serializers.ModelSerializer):
         model = Company
         fields = ["id", "name", "verify"]
 
+    def to_representation(self, instance):
+        vacancy = Vacancy.objects.filter(company=instance.id).count()
+        response = super().to_representation(instance)
+        response["vacancies"] = vacancy
+
+        return response
+
 
 class RetrieveCompanySerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Company
         fields = [
@@ -63,6 +73,16 @@ class RetrieveCompanySerializer(serializers.ModelSerializer):
             "work_phone_number",
             "country",
         ]
+
+    def to_representation(self, instance):
+        from src.vacancies.serializers import VacancyShortSerializer
+
+        vacancy = Vacancy.objects.filter(company=instance.id)
+
+        response = super().to_representation(instance)
+        response["vacancies"] = VacancyShortSerializer(vacancy, many=True).data
+
+        return response
 
 
 class RequestSerializer(serializers.ModelSerializer):

@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.core.exceptions import BadRequest, PermissionDenied
 from django.db import transaction
 from django.shortcuts import get_object_or_404
@@ -7,15 +8,10 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Company, Country, ScoreOfActivity, VerifyRequest
-from .serializers import (
-    ApproveRequestSerializer,
-    CreateCompanySerializer,
-    ListOfCountriesSerializer,
-    RequestSerializer,
-    RetrieveCompanySerializer,
-    ScoreOfActivitiesSerializer,
-    ShortCompanySerializer,
-)
+from .serializers import (ApproveRequestSerializer, CreateCompanySerializer,
+                          ListOfCountriesSerializer, RequestSerializer,
+                          RetrieveCompanySerializer,
+                          ScoreOfActivitiesSerializer, ShortCompanySerializer)
 
 
 class CompanyViewSet(ModelViewSet):

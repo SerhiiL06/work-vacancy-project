@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, viewsets
@@ -7,17 +8,11 @@ from rest_framework.response import Response
 
 from .models import Company, Respond, Resume, ScoreOfActivity, Vacancy
 from .permissions import VacancyObjPermission, VacancyPermissions
-from .serializers import (
-    CreateRespondSerializer,
-    CreateResumeSerializer,
-    CreateVacancySerializer,
-    ListResumeSerializer,
-    RespondSerializer,
-    VacancyListSerializer,
-    VacancyUpdateSerializer,
-    VacancyShortSerializer,
-    RetrieveResumeSerializer,
-)
+from .serializers import (CreateRespondSerializer, CreateResumeSerializer,
+                          CreateVacancySerializer, ListResumeSerializer,
+                          RespondSerializer, RetrieveResumeSerializer,
+                          VacancyListSerializer, VacancyShortSerializer,
+                          VacancyUpdateSerializer)
 
 
 class VacancyViewSet(viewsets.ModelViewSet):
@@ -41,6 +36,13 @@ class VacancyViewSet(viewsets.ModelViewSet):
         )
         new = serializer.save()
         return Response({"ok": new.id}, 201)
+
+    def list(self, request, *args, **kwargs):
+        if not cache.get("vacancies"):
+            response = super().list(request, *args, **kwargs)
+            cache.set("vacancies", response.data, 60)
+            return response
+        return Response(cache.get("vacancies"))
 
     def retrieve(self, request, *args, **kwargs):
         obj = Vacancy.objects.get(id=kwargs.get("pk"))
