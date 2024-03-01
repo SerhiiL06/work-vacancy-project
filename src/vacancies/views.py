@@ -8,11 +8,19 @@ from rest_framework.response import Response
 
 from .models import Company, Respond, Resume, ScoreOfActivity, Vacancy
 from .permissions import VacancyObjPermission, VacancyPermissions
-from .serializers import (CreateRespondSerializer, CreateResumeSerializer,
-                          CreateVacancySerializer, ListResumeSerializer,
-                          RespondSerializer, RetrieveResumeSerializer,
-                          VacancyListSerializer, VacancyShortSerializer,
-                          VacancyUpdateSerializer)
+from .logic import generate_statistic
+from .serializers import (
+    CreateRespondSerializer,
+    CreateResumeSerializer,
+    CreateVacancySerializer,
+    ListResumeSerializer,
+    RespondSerializer,
+    RetrieveResumeSerializer,
+    VacancyListSerializer,
+    VacancyShortSerializer,
+    VacancyUpdateSerializer,
+    VacancyCountSerializer,
+)
 
 
 class VacancyViewSet(viewsets.ModelViewSet):
@@ -66,6 +74,23 @@ class VacancyViewSet(viewsets.ModelViewSet):
         list = Vacancy.objects.filter(company__in=query)
         serializer = VacancyListSerializer(list, many=True)
         return Response({"user vacancies": serializer.data})
+
+    @action(methods=["get"], detail=False, url_path="by-category")
+    def vacancies_by_category(self, request, *args, **kwargs):
+
+        if not cache.get("vacancy_count"):
+            query = Vacancy.objects.raw(
+                """ SELECT 1 as id, companies_scoreofactivity.title, 
+                    COUNT(*) as activity_count FROM vacancies_vacancy
+                    JOIN companies_scoreofactivity ON companies_scoreofactivity.id=vacancies_vacancy.activity_scope_id
+                    GROUP BY vacancies_vacancy.activity_scope_id, companies_scoreofactivity.title
+                    ORDER BY activity_count DESC
+                    """
+            )
+            serializer = VacancyCountSerializer(query, many=True)
+            cache.set("vacancy_count", serializer.data, 3600)
+            return Response({"vacancies": serializer.data})
+        return Response({"vacancies": cache.get("vacancy_count")})
 
     def get_serializer_class(self):
         if self.action in "list":
@@ -149,3 +174,15 @@ class RespondViewSet(viewsets.ModelViewSet):
                 resume_id__owner=self.request.user
             ).prefetch_related("resume_id")
         return super().get_queryset()
+
+
+class StatisticViewSet(viewsets.GenericViewSet):
+    queryset = Vacancy.objects.filter(is_active=True)
+
+    @action(methods=["get"], detail=False)
+    def statistic(self, request, *args, **kwargs):
+        if not cache.get("statistic"):
+            statictic = generate_statistic()
+            cache.set("statistic", statictic, 86400)
+            return Response({"avg_calary": statictic})
+        return Response({"avg_calary": cache.get("statistic")})

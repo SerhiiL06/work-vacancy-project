@@ -1,8 +1,9 @@
 from django.db import models
+from django.db.models.aggregates import Avg
 
 from src.companies.models import Company, ScoreOfActivity
 from src.users.models import User
-
+import json
 from .validators import calary_validator
 
 

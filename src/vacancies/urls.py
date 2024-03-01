@@ -16,6 +16,7 @@ urlpatterns = [
     path(
         "jobseeker/vacansies/respondes/", views.RespondViewSet.as_view({"get": "list"})
     ),
+    path("statistic", views.StatisticViewSet.as_view({"get": "statistic"})),
 ]
 
 urlpatterns += router.urls

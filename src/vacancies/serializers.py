@@ -1,9 +1,11 @@
 from rest_framework import serializers
 
-from src.companies.serializers import (ScoreOfActivitiesSerializer,
-                                       ShortCompanySerializer)
+from src.companies.serializers import (
+    ScoreOfActivitiesSerializer,
+    ShortCompanySerializer,
+)
 from src.users.serializers import UserInlineSerializer
-
+import math
 from .models import Respond, Resume, Vacancy
 
 
@@ -85,3 +87,18 @@ class RespondSerializer(serializers.ModelSerializer):
     class Meta:
         model = Respond
         fields = ["vacancy_id", "resume_id", "viewed"]
+
+
+class VacancyCountSerializer(serializers.Serializer):
+    title = serializers.CharField()
+    activity_count = serializers.IntegerField()
+
+
+class ByCategorySerializer(serializers.Serializer):
+    title = serializers.CharField()
+    avg_calary = serializers.IntegerField()
+
+
+class StatisticSerializer(serializers.Serializer):
+    avg_calary = serializers.IntegerField()
+    category = ByCategorySerializer(many=True)
