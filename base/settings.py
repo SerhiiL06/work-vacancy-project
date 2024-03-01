@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "django_filters",
     "src.users",
+    "src.notifications",
     "src.vacancies",
     "src.companies",
 ]

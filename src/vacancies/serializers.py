@@ -86,7 +86,26 @@ class RespondSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Respond
-        fields = ["vacancy_id", "resume_id", "viewed"]
+        fields = ["id", "viewed", "vacancy_id", "resume_id"]
+
+
+class RetrieveRespondSerializer(serializers.ModelSerializer):
+    vacancy_title = serializers.SerializerMethodField(source="vacancy_id")
+
+    class Meta:
+        model = Respond
+        fields = ["id", "viewed", "vacancy_title"]
+
+    def get_vacancy_title(self, obj):
+        return obj.vacancy_id.title
+
+    def to_representation(self, instance):
+        resume = Resume.objects.get(id=instance.resume_id.id)
+
+        representation = super().to_representation(instance)
+
+        representation["resume"] = ListResumeSerializer(resume, many=False).data
+        return representation
 
 
 class VacancyCountSerializer(serializers.Serializer):

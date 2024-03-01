@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from .models import Company, Respond, Resume, ScoreOfActivity, Vacancy
 from .permissions import VacancyObjPermission, VacancyPermissions
-from .logic import generate_statistic
+from .logic import generate_statistic, check_respond_permission
 from .serializers import (
     CreateRespondSerializer,
     CreateResumeSerializer,
@@ -20,6 +20,7 @@ from .serializers import (
     VacancyShortSerializer,
     VacancyUpdateSerializer,
     VacancyCountSerializer,
+    RetrieveRespondSerializer,
 )
 
 
@@ -174,6 +175,29 @@ class RespondViewSet(viewsets.ModelViewSet):
                 resume_id__owner=self.request.user
             ).prefetch_related("resume_id")
         return super().get_queryset()
+
+
+class EmployeerRespondViewSet(viewsets.ModelViewSet):
+    queryset = Respond.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["get", "post"]
+    serializer_class = RespondSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        check_respond_permission(request.user, kwargs.get("pk"))
+        obj = self.get_object()
+        serializer = RetrieveRespondSerializer(obj, many=False)
+        obj.viewed = True
+        obj.save()
+        return Response({"respond": serializer.data})
+
+    @action(methods=["post"], detail=True, url_path="answer", url_name="answer")
+    def answer_to_respond(self, request, *args, **kwargs):
+        return Response(request.data.get("answer"))
+
+    def get_queryset(self):
+        ids = Vacancy.objects.filter(company__owner=self.request.user)
+        return Respond.objects.filter(vacancy_id__in=ids)
 
 
 class StatisticViewSet(viewsets.GenericViewSet):

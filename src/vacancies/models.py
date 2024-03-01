@@ -1,6 +1,5 @@
 from django.db import models
-from django.db.models.aggregates import Avg
-
+from django.core.exceptions import PermissionDenied
 from src.companies.models import Company, ScoreOfActivity
 from src.users.models import User
 import json
@@ -40,6 +39,8 @@ class Resume(models.Model):
 
 
 class Respond(models.Model):
+    message = models.CharField(max_length=50, null=True, blank=True)
+    answer = models.TextField(max_length=500, null=True, blank=True)
     resume_id = models.ForeignKey(Resume, on_delete=models.CASCADE)
     vacancy_id = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
