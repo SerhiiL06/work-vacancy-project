@@ -5,7 +5,7 @@ from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-
+from src.notifications.models import Message
 from .models import Company, Respond, Resume, ScoreOfActivity, Vacancy
 from .permissions import VacancyObjPermission, VacancyPermissions
 from .logic import generate_statistic, check_respond_permission
@@ -22,6 +22,8 @@ from .serializers import (
     VacancyCountSerializer,
     RetrieveRespondSerializer,
 )
+from asgiref.sync import async_to_sync
+from adrf.viewsets import ViewSet
 
 
 class VacancyViewSet(viewsets.ModelViewSet):
@@ -177,7 +179,7 @@ class RespondViewSet(viewsets.ModelViewSet):
         return super().get_queryset()
 
 
-class EmployeerRespondViewSet(viewsets.ModelViewSet):
+class EmployeerRespondViewSet(ViewSet):
     queryset = Respond.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get", "post"]
@@ -193,7 +195,20 @@ class EmployeerRespondViewSet(viewsets.ModelViewSet):
 
     @action(methods=["post"], detail=True, url_path="answer", url_name="answer")
     def answer_to_respond(self, request, *args, **kwargs):
-        return Response(request.data.get("answer"))
+        answer = request.data.get("answer")
+
+        error_block = {}
+
+        if answer is None or len(answer) < 5:
+            return error_block.update({"error": "incorrect answer"})
+        respond = Respond.objects.get(id=kwargs.get("pk"))
+        vacancy = Vacancy.objects.get(id=respond.vacancy_id.id)
+
+        if vacancy.company.owner != request.user:
+            raise PermissionDenied()
+
+        new_message = Message.objects.create(text=answer, respond_id=respond)
+        return Response({"message": new_message.id})
 
     def get_queryset(self):
         ids = Vacancy.objects.filter(company__owner=self.request.user)
