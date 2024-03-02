@@ -17,10 +17,6 @@ urlpatterns = [
     path(
         "jobseeker/vacansies/respondes/", views.RespondViewSet.as_view({"get": "list"})
     ),
-    # path(
-    #     "employeer/vacansies/responds/<int:pk>/answer",
-    #     views.EmployeerRespondViewSet.as_view({"post": "answer_to_respond"}),
-    # ),
     path("statistic", views.StatisticViewSet.as_view({"get": "statistic"})),
 ]
 

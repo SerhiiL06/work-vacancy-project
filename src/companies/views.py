@@ -8,10 +8,15 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Company, Country, ScoreOfActivity, VerifyRequest
-from .serializers import (ApproveRequestSerializer, CreateCompanySerializer,
-                          ListOfCountriesSerializer, RequestSerializer,
-                          RetrieveCompanySerializer,
-                          ScoreOfActivitiesSerializer, ShortCompanySerializer)
+from .serializers import (
+    ApproveRequestSerializer,
+    CreateCompanySerializer,
+    ListOfCountriesSerializer,
+    RequestSerializer,
+    RetrieveCompanySerializer,
+    ScoreOfActivitiesSerializer,
+    ShortCompanySerializer,
+)
 
 
 class CompanyViewSet(ModelViewSet):
@@ -113,9 +118,8 @@ class VerifyCompanyViewSet(ModelViewSet):
                 {"message": "request is correct cancel"}, status.HTTP_202_ACCEPTED
             )
 
-        company = Company.objects.get(id=verification_request.company.id)
-        company.verify = True
-        company.save()
+        Company.objects.filter(id=verification_request.company.id).update(verify=True)
+
         verification_request.status = "accept"
         verification_request.save()
 

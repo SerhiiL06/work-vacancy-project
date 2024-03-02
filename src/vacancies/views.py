@@ -22,7 +22,6 @@ from .serializers import (
     VacancyCountSerializer,
     RetrieveRespondSerializer,
 )
-from asgiref.sync import async_to_sync
 from adrf.viewsets import ViewSet
 
 
@@ -163,7 +162,10 @@ class RespondViewSet(viewsets.ModelViewSet):
         current_resume = get_object_or_404(
             Resume, id=data.validated_data.get("resume_id")
         )
-        if current_resume.owner != request.user:
+        if (
+            current_resume.owner != request.user
+            or current_vacancy.company.owner == request.user
+        ):
             raise PermissionDenied()
         Respond.objects.create(
             resume_id=current_resume,
@@ -179,7 +181,7 @@ class RespondViewSet(viewsets.ModelViewSet):
         return super().get_queryset()
 
 
-class EmployeerRespondViewSet(ViewSet):
+class EmployeerRespondViewSet(viewsets.ModelViewSet):
     queryset = Respond.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get", "post"]
@@ -187,7 +189,7 @@ class EmployeerRespondViewSet(ViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         check_respond_permission(request.user, kwargs.get("pk"))
-        obj = self.get_object()
+        obj = Respond.objects.get(id=kwargs.get("pk"))
         serializer = RetrieveRespondSerializer(obj, many=False)
         obj.viewed = True
         obj.save()
@@ -203,12 +205,19 @@ class EmployeerRespondViewSet(ViewSet):
             return error_block.update({"error": "incorrect answer"})
         respond = Respond.objects.get(id=kwargs.get("pk"))
         vacancy = Vacancy.objects.get(id=respond.vacancy_id.id)
-
+        resume = Resume.objects.get(id=respond.resume_id.id)
         if vacancy.company.owner != request.user:
             raise PermissionDenied()
 
-        new_message = Message.objects.create(text=answer, respond_id=respond)
-        return Response({"message": new_message.id})
+        get, new_message = Message.objects.get_or_create(
+            text=answer,
+            respond_id=respond,
+            sender=request.user,
+            recipient=resume.owner,
+        )
+        if new_message:
+            return Response({"message": get.id})
+        return Response({"erorr": "message to this respond already exists"})
 
     def get_queryset(self):
         ids = Vacancy.objects.filter(company__owner=self.request.user)
