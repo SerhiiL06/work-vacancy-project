@@ -1,6 +1,7 @@
 from django.db import models
-from src.vacancies.models import Respond
+
 from src.users.models import User
+from src.vacancies.models import Respond
 
 
 class Message(models.Model):

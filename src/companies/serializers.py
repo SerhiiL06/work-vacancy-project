@@ -49,16 +49,11 @@ class CreateCompanySerializer(serializers.ModelSerializer):
 
 
 class ShortCompanySerializer(serializers.ModelSerializer):
+    vacancies = serializers.IntegerField()
+
     class Meta:
         model = Company
-        fields = ["id", "name", "verify"]
-
-    def to_representation(self, instance):
-        vacancy = Vacancy.objects.filter(company=instance.id).count()
-        response = super().to_representation(instance)
-        response["vacancies"] = vacancy
-
-        return response
+        fields = ["id", "name", "verify", "vacancies"]
 
 
 class RetrieveCompanySerializer(serializers.ModelSerializer):

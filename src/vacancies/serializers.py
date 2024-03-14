@@ -1,11 +1,11 @@
+import math
+
 from rest_framework import serializers
 
-from src.companies.serializers import (
-    ScoreOfActivitiesSerializer,
-    ShortCompanySerializer,
-)
+from src.companies.serializers import (ScoreOfActivitiesSerializer,
+                                       ShortCompanySerializer)
 from src.users.serializers import UserInlineSerializer
-import math
+
 from .models import Respond, Resume, Vacancy
 
 

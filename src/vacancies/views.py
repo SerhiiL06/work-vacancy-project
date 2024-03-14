@@ -1,28 +1,25 @@
+from adrf.viewsets import ViewSet
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, viewsets
+from rest_framework.authentication import (BasicAuthentication,
+                                           SessionAuthentication)
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+
 from src.notifications.models import Message
+
+from .logic import check_respond_permission, generate_statistic
 from .models import Company, Respond, Resume, ScoreOfActivity, Vacancy
 from .permissions import VacancyObjPermission, VacancyPermissions
-from .logic import generate_statistic, check_respond_permission
-from .serializers import (
-    CreateRespondSerializer,
-    CreateResumeSerializer,
-    CreateVacancySerializer,
-    ListResumeSerializer,
-    RespondSerializer,
-    RetrieveResumeSerializer,
-    VacancyListSerializer,
-    VacancyShortSerializer,
-    VacancyUpdateSerializer,
-    VacancyCountSerializer,
-    RetrieveRespondSerializer,
-)
-from adrf.viewsets import ViewSet
+from .serializers import (CreateRespondSerializer, CreateResumeSerializer,
+                          CreateVacancySerializer, ListResumeSerializer,
+                          RespondSerializer, RetrieveRespondSerializer,
+                          RetrieveResumeSerializer, VacancyCountSerializer,
+                          VacancyListSerializer, VacancyShortSerializer,
+                          VacancyUpdateSerializer)
 
 
 class VacancyViewSet(viewsets.ModelViewSet):
@@ -57,9 +54,14 @@ class VacancyViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         obj = Vacancy.objects.get(id=kwargs.get("pk"))
         serialzier = VacancyListSerializer(obj, many=False)
-        check = Respond.objects.filter(vacancy_id=obj.id, resume_id__owner=request.user)
-        last_sended = check.first().created_at.date() if check.first() else None
-        return Response({"vacancy": serialzier.data, "last_sended": last_sended}, 200)
+        context = {"vacancy": serialzier.data}
+        if request.user.is_authenticated:
+            check = Respond.objects.filter(
+                vacancy_id=obj.id, resume_id__owner=request.user
+            )
+            last_sended = check.first().created_at.date() if check.first() else None
+            context["last_sended"] = last_sended
+        return Response(context, 200)
 
     @action(
         methods=["get"],
@@ -105,8 +107,8 @@ class VacancyViewSet(viewsets.ModelViewSet):
 
 
 class ResumeViewSet(viewsets.ModelViewSet):
-    queryset = Resume.objects.filter(is_active=True)
-    serializer_class = CreateResumeSerializer
+    queryset = Resume.objects.filter(is_active=True).prefetch_related("owner")
+    serializer_class = RetrieveResumeSerializer
     permission_classes = [permissions.AllowAny]
 
     @action(
@@ -126,13 +128,24 @@ class ResumeViewSet(viewsets.ModelViewSet):
             raise ValidationError({"error": "admin cannot create resume"})
         serializer.save(owner=self.request.user)
 
+    def retrieve(self, request, *args, **kwargs):
+        key = request.session.session_key
+        cache_key = f"resume:'{kwargs.get('pk')}:{key}"
+        if not cache.get(cache_key):
+            obj = self.get_object()
+            serializer = RetrieveResumeSerializer(instance=obj, many=False)
+            cache.set(cache_key, serializer.data, 180)
+            return Response(serializer.data, 200)
+
+        return Response(data=cache.get(cache_key), status=200)
+
     def get_serializer_class(self):
         if self.action == "list":
             return ListResumeSerializer
         if self.action == "create":
-            return super().get_serializer_class()
+            return CreateResumeSerializer
         if self.action == "retrieve":
-            return RetrieveResumeSerializer
+            return super().get_serializer_class()
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:

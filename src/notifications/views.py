@@ -1,8 +1,8 @@
-from rest_framework import viewsets
+from django.core.exceptions import PermissionDenied
+from rest_framework import permissions, viewsets
+
 from .models import Message
 from .serializers import MessagesSerializer
-from rest_framework import permissions
-from django.core.exceptions import PermissionDenied
 
 
 class NotificationViewSet(viewsets.ModelViewSet):

@@ -15,6 +15,12 @@ DEBUG = os.getenv("DEBUG")
 ALLOWED_HOSTS = []
 
 
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -27,6 +33,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "django_filters",
+    "debug_toolbar",
     "adrf",
     "src.users",
     "src.notifications",
@@ -42,6 +49,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 
@@ -49,6 +57,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        # "rest_framework.authentication.BasicAuthentication",
+        # "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
 }
@@ -81,10 +91,20 @@ DATABASES = {
         "USERNAME": os.getenv("DB_USERNAME"),
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+        "PORT": 5433,
     }
 }
 
+# # DOCKER
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql_psycopg2",
+#         "NAME": os.getenv("POSTGRES_DB"),
+#         "USERNAME": os.getenv("POSTGRES_USER"),
+#         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+#         "HOST": os.getenv("DB_HOST"),
+#     }
+# }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -132,8 +152,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
-EMAIL_HOST_USER = "sergiy06061997@gmail.com"
-EMAIL_HOST_PASSWORD = "weir gzwf sbsq xvqb"
+EMAIL_HOST_USER = os.getenv("EMAIL_USER")
+
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASSWORD")
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 

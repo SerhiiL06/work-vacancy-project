@@ -1,6 +1,7 @@
 from django.core.cache import cache
 from django.core.exceptions import BadRequest, PermissionDenied
 from django.db import transaction
+from django.db.models import Count, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status
 from rest_framework.decorators import action
@@ -8,15 +9,10 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Company, Country, ScoreOfActivity, VerifyRequest
-from .serializers import (
-    ApproveRequestSerializer,
-    CreateCompanySerializer,
-    ListOfCountriesSerializer,
-    RequestSerializer,
-    RetrieveCompanySerializer,
-    ScoreOfActivitiesSerializer,
-    ShortCompanySerializer,
-)
+from .serializers import (ApproveRequestSerializer, CreateCompanySerializer,
+                          ListOfCountriesSerializer, RequestSerializer,
+                          RetrieveCompanySerializer,
+                          ScoreOfActivitiesSerializer, ShortCompanySerializer)
 
 
 class CompanyViewSet(ModelViewSet):
@@ -43,8 +39,13 @@ class CompanyViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+    def list(self, request, *args, **kwargs):
+        query = Company.objects.prefetch_related("vac").annotate(vacancies=Count("vac"))
+        serializer = ShortCompanySerializer(query, many=True)
+        return Response(serializer.data)
+
     def get_queryset(self):
-        if self.request.user.is_staff:
+        if self.request.user.is_staff or self.action == "retrieve":
             return super().get_queryset()
         return Company.objects.filter(owner=self.request.user)
 

@@ -1,6 +1,7 @@
-from .serializers import StatisticSerializer
-from .models import Vacancy
 from django.core.exceptions import PermissionDenied
+
+from .models import Vacancy
+from .serializers import StatisticSerializer
 
 
 def generate_statistic():

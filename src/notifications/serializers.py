@@ -1,7 +1,9 @@
 from rest_framework import serializers
-from .models import Message
+
 from src.vacancies.models import Vacancy
 from src.vacancies.serializers import VacancyShortSerializer
+
+from .models import Message
 
 
 class MessagesSerializer(serializers.ModelSerializer):

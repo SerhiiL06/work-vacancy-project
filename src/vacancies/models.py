@@ -1,8 +1,11 @@
-from django.db import models
+import json
+
 from django.core.exceptions import PermissionDenied
+from django.db import models
+
 from src.companies.models import Company, ScoreOfActivity
 from src.users.models import User
-import json
+
 from .validators import calary_validator
 
 
@@ -17,7 +20,7 @@ class Vacancy(models.Model):
     calary = models.CharField(
         validators=[calary_validator], null=True, blank=True, default="0"
     )
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="vac")
     activity_scope = models.ForeignKey(ScoreOfActivity, on_delete=models.CASCADE)
 
     class Meta:

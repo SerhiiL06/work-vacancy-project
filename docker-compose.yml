@@ -1,0 +1,32 @@
+version: '3.7'
+
+
+services:
+  web:
+    build:
+      context: .
+    container_name: web_work
+    ports:
+    - 8000:8000
+    env_file: .env
+    volumes: 
+      - .:/app
+    command: >
+     sh -c "python manage.py makemigrations && 
+              python manage.py migrate &&
+              python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+     - db
+     - redis
+  db:
+    image: postgres:15.5-alpine3.19
+    env_file:
+      - .env
+    command: -p 5433
+    expose:
+      - 5432
+  redis:
+    image: redis:latest
+    hostname: redis
+    ports:
+      - 6379:6379
